@@ -1,4 +1,4 @@
-colorscheme gruvbox
+colorscheme neon
 
 sign define DiagnosticSignError text=  linehl= texthl=DiagnosticSignError numhl=
 sign define DiagnosticSignHint text=  linehl= texthl=DiagnosticSignHint numhl=
