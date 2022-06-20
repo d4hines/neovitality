@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = github:nixos/nixpkgs/nixpkgs-unstable;
     flake-utils.url = github:numtide/flake-utils;
-    devshell.url = github:numtide/devshell;
     nur.url = github:nix-community/NUR;
 
     neovim = {
@@ -19,14 +18,13 @@
     };
   };
 
-  outputs = { self, nixpkgs, neovim, flake-utils, devshell, nur, vim-plugins-overlay, ... }@inputs:
+  outputs = { self, nixpkgs, neovim, flake-utils, nur, vim-plugins-overlay, ... }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
           config = { allowUnfree = true; };
           overlays = [
-            devshell.overlay
             vim-plugins-overlay.overlay
             neovim.overlay
             nur.overlay
@@ -35,48 +33,10 @@
             })
           ];
         };
-        neovimBuilder = import ./options/neovimBuilder.nix { inherit pkgs; };
-
-        customNeovim = neovimBuilder {
-          config = {
-            vim = import ./defaults/defaultConfig.nix { inherit pkgs; };
-          };
-        };
-
+        customNeovim = import ./config.nix { inherit pkgs; };
       in
-      rec {
-
-        inherit neovimBuilder;
-
-        overlays = {
-          vim-plugins-overlay = vim-plugins-overlay.overlay;
-        };
-
-        packages.neovim-nightly = pkgs.neovim;
-
-        defaultPackage = customNeovim.neovim;
-
-        apps = {
-          nvim = flake-utils.lib.mkApp {
-            drv = defaultPackage;
-            name = "nvim";
-          };
-        };
-
-        defaultApp = apps.nvim;
-
-        devShell = pkgs.devshell.mkShell {
-          name = "neovitality";
-          packages = with pkgs; [
-            nixpkgs-fmt
-            nodePackages.vim-language-server
-            rnix-lsp
-            stylua
-          ];
-
-          commands = [ ];
-        };
-
+      {
+        packages = {default = customNeovim.neovim;};
       }
     );
 }
