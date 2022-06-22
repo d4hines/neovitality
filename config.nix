@@ -1,6 +1,7 @@
 { pkgs, lib ? pkgs.lib }:
 let
   vimOptions = lib.evalModules {
+    specialArgs = { inherit pkgs; };
     modules = [
       {
         imports = [
@@ -156,8 +157,6 @@ let
                       let groups = matchCtrl it; in if groups == null then it else "<C-${toUpper (head groups)}>${head (tail groups)}";
                     mapVimBinding = prefix: mappings: mapAttrsFlatten (name: value: "${prefix} ${mapKeybinding name} ${value}") (filterNonNull mappings);
 
-                    globalsVimscript = mapAttrsFlatten (name: value: "let g:${name}=${toJSON value}") (filterNonNull config.vim.globals);
-
                     nmap = mapVimBinding "nmap" config.vim.nmap;
                     imap = mapVimBinding "imap" config.vim.imap;
                     vmap = mapVimBinding "vmap" config.vim.vmap;
@@ -277,8 +276,6 @@ let
               }
           )
         ];
-      }
-      ({
         vim =
           with builtins;
           with lib;
@@ -289,41 +286,43 @@ let
               ${luaConfig}
               EOF
             '';
-
           in
           {
             plugins = with pkgs.vimPlugins; with pkgs.vitalityVimPlugins;  [
-                            { /*0*/ plugin = telescope-nvim; config = wrapLuaConfig (readFile ./config/telescope-nvim-config.lua); }
-                                          { plugin = blamer-nvim; config = readFile ./config/blamer-nvim-config.vim; }
-                                          { plugin = cmp-buffer; }               { plugin = cmp-nvim-lsp; }
+              { /*0*/ plugin = telescope-nvim; config = wrapLuaConfig (readFile ./config/telescope-nvim-config.lua); }
+              { plugin = blamer-nvim; config = readFile ./config/blamer-nvim-config.vim; }
+              { plugin = cmp-buffer; }
+              { plugin = cmp-nvim-lsp; }
               { plugin = cmp-path; }
-                            { plugin = cmp-treesitter; }
-                                                                                                                              { plugin = gitsigns-nvim; config = wrapLuaConfig (builtins.readFile ./config/gitsigns-nvim-config.lua); }
+              { plugin = cmp-treesitter; }
+              { plugin = gitsigns-nvim; config = wrapLuaConfig (builtins.readFile ./config/gitsigns-nvim-config.lua); }
               { plugin = neon; config = readFile ./config/theme-config.vim; }
               { plugin = harpoon; config = wrapLuaConfig (readFile ./config/harpoon-config.lua); }
-                                          { plugin = lsp_extensions-nvim; }               { plugin = lsp_signature-nvim; config = "lua require'lsp_signature'.on_attach()"; }
+              { plugin = lsp_extensions-nvim; }
+              { plugin = lsp_signature-nvim; config = "lua require'lsp_signature'.on_attach()"; }
               { plugin = lspkind-nvim; config = "lua require('lspkind').init()"; }
-                            { plugin = neogit; }
+              { plugin = neogit; }
               { plugin = nvim-cmp; config = wrapLuaConfig (readFile ./config/nvim-cmp-config.lua); }
-                                          { plugin = nvim-lightbulb; config = "autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()"; }               { plugin = nvim-lspconfig; }
-                            { plugin = nvim-treesitter-context; }
+              { plugin = nvim-lightbulb; config = "autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()"; }
+              { plugin = nvim-lspconfig; }
+              { plugin = nvim-treesitter-context; }
               { plugin = nvim-treesitter-textobjects; config = readFile ./config/nvim-treesitter-textobjects-config.vim; }
-                            { plugin = comment-nvim; config = wrapLuaConfig "require('Comment').setup()"; }
+              { plugin = comment-nvim; config = wrapLuaConfig "require('Comment').setup()"; }
               { plugin = nvim-ts-rainbow; }
-                            { plugin = octo-nvim; }
+              { plugin = octo-nvim; }
               { plugin = pkgs.vimPlugins.nvim-treesitter.withPlugins (_: pkgs.tree-sitter.allGrammars); config = wrapLuaConfig (readFile ./config/nvim-treesitter-config.lua); }
               { plugin = pkgs.vimPlugins.telescope-fzy-native-nvim; config = "lua require('telescope').load_extension('fzy_native')"; }
               { plugin = plenary-nvim; }
               { plugin = popup-nvim; }
-                                          { plugin = surround; }
+              { plugin = surround; }
               { plugin = tabular; }
-                                          { plugin = telescope-file-browser-nvim; config = "lua require('telescope').load_extension('file_browser')"; }
-                                                                      { plugin = vim-commentary; }
-                                                        { plugin = vim-devicons; }
+              { plugin = telescope-file-browser-nvim; config = "lua require('telescope').load_extension('file_browser')"; }
+              { plugin = vim-commentary; }
+              { plugin = vim-devicons; }
               { plugin = vim-dispatch; }
-                            { plugin = vim-hexokinase; config = "let g:Hexokinase_optInPatterns = 'full_hex,rgb,rgba,hsl,hsla'"; }
-                                          { plugin = vim-polyglot; }
-                            { plugin = vim-repeat; }
+              { plugin = vim-hexokinase; config = "let g:Hexokinase_optInPatterns = 'full_hex,rgb,rgba,hsl,hsla'"; }
+              { plugin = vim-polyglot; }
+              { plugin = vim-repeat; }
               { plugin = vim-sensible; }
               { plugin = vim-sneak; config = "let g:sneak#label=1"; }
               { plugin = which-key-nvim; config = wrapLuaConfig (readFile ./config/which-key-nvim-config.lua); }
@@ -355,7 +354,7 @@ let
               Ctrl-k = "<C-W>k";
               Ctrl-l = "<C-W>l";
 
-            "<leader>hg" = "<cmd>FloatermNew --title=gitui ${pkgs.gitui}/bin/gitui<cr>";
+              "<leader>hg" = "<cmd>FloatermNew --title=gitui ${pkgs.gitui}/bin/gitui<cr>";
             };
 
             inoremap = { };
@@ -366,11 +365,8 @@ let
               "<leader>x" = "<Esc> <C-\\><C-n>";
             };
           };
-      })
+      }
     ];
-    specialArgs = {
-      inherit pkgs;
-    };
   };
   vim = vimOptions.config.vim;
 in
@@ -378,7 +374,6 @@ in
   neovim = pkgs.wrapNeovim pkgs.neovim {
     configure = {
       customRC = vim.configRC;
-
       packages.myVimPackage = with pkgs.vimPlugins; {
         start = vim.startPlugins;
         opt = vim.optPlugins;
